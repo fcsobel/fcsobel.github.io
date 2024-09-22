@@ -1,35 +1,35 @@
-const template = `
-    <div v-if="context.workers.length === 0">No workers available.</div>
+<template>
+    <div v-if="context.items.length === 0">No items available.</div>
     <div v-else>
         <table class="table table-striped table-bordered table-sm" style="margin:0;">
             <thead>
                 <tr>
                     <th v-for="header in context.headers" @click="setSortColumn(header.key)">
                         {{ header.value }}
-                        <span class="arrow" :class="{ active: this.sortColumn === header.key && this.order === 'ASC' }">&#8593;</span>
-                        <span class="arrow" :class="{ active: this.sortColumn === header.key && this.order === 'DESC' }">&#8595;</span>
+                        <span class="arrow" :class="{ active: sortColumn === header.key && order === 'ASC' }">&#8593;</span>
+                        <span class="arrow" :class="{ active: sortColumn === header.key && order === 'DESC' }">&#8595;</span>
                     </th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(worker,index) in filteredWorkers" v-on:click="context.selectedItem=worker"
-                    :class="{ 'table-success': worker === context.selectedItem }">
-                    <td>{{ worker.name }}</td>
-                    <td>{{ worker.position }}</td>
-                    <td>{{ worker.office }}</td>
-                    <td>{{ worker.age }}</td>
+                <tr v-for="(item,index) in filteredItems" v-on:click="SelectItem(item)"
+                    :class="{ 'table-success': item === context.selectedItem }">
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.position }}</td>
+                    <td>{{ item.office }}</td>
+                    <td>{{ item.age }}</td>
                     <td style="text-align: center;">
-                        <a href="#" @click.prevent="EditItem(worker)"><i class="rb-2 fa-solid fa-cat"></i></a>
+                        <a href="#" @click.stop.prevent="EditItem(item)"><i class="rb-2 fa-solid fa-cat"></i></a>
                     </td>
                     <td style="text-align: center;">
-                        <a href="#" @click.prevent="DeleteItem(index)"><i class="rb-2 fa-solid fa-trash"></i></a>
+                        <a href="#" @click.stop.prevent="DeleteItem(index)"><i class="rb-2 fa-solid fa-trash"></i></a>
                     </td>
                 </tr>
                 <tr>
                     <td colspan="4"></td>
                     <td style="text-align: center;">
-                        <a href="#" @click.prevent="AddItem()"><i class="fa-solid fa-plus"></i></a>
+                        <a href="#" @click.stop.prevent="AddItem()"><i class="fa-solid fa-plus"></i></a>
                     </td>
                     <td></td>
                 </tr>
@@ -51,9 +51,20 @@ const template = `
                 </div>
             </div>
         </div>
-    </div>      
-`;
+    </div>    
+</template>
 
+<script setup>
+    //// Local Component Registration (not needed when global)
+    //import vueEditComponent from './vue-edit-component.vue';
+
+    //const { createApp } = Vue;
+    //const { loadModule } = window['vue3-sfc-loader'];
+    //let options = sfcOptions;
+    //let vueEditComponent = loadModule('./vue-components/vue-edit-component.vue', options);
+</script>
+
+<script>
 export default {
     props: ["context"],
     data() {
@@ -62,12 +73,17 @@ export default {
             order: "ASC",
         }
     },
-    template: template,
-    components: {
-        VueEditComponent: Vue.defineAsyncComponent(() => import('./vue-edit-component.js')),
-    },
+    //template: template, // Not used in SFC component
+    //components: {
+      //  VueEditComponent: vueEditComponent
+    //},
     //setup() {    },
     methods: {
+        SelectItem(item)
+        {
+            // set current item
+            this.context.selectedItem = item;
+        },
         EditItem(item)
         {
             // set current item
@@ -79,16 +95,22 @@ export default {
         },
         DeleteItem(index)
         {
-            // remove item at index
-            this.context.workers.splice(index, 1);
-
-            if (index >= this.context.workers.length) 
+            if (index == 0)            
             {
-                index = this.context.workers.length - 1;
+                // get next item
+                var item = this.context.items[1];
             }
+            else
+            {
+                // get previos item
+                var item = this.context.items[index - 1];
+            }            
+
+            // remove item at index
+            this.context.items.splice(index, 1);
 
             // set current item after delete
-            this.context.selectedItem = this.context.workers[index];
+            this.context.selectedItem = item;
         },
         AddItem()
         {
@@ -97,8 +119,8 @@ export default {
             let width = 200 + offset;
             offset = Math.floor(Math.random() * 10);
             let length = 200 + offset;
-            this.context.selectedItem = { age :1, image : `http://placekitten.com/${length}/${width}`};
-            this.context.workers.push(this.context.selectedItem);
+            this.context.selectedItem = { age :1, image : `http://placecats.com/${length}/${width}`};
+            this.context.items.push(this.context.selectedItem);
             // show modal to edit
             var myModal = new bootstrap.Modal(document.getElementById('editModal'));
             myModal.show();
@@ -113,15 +135,15 @@ export default {
         },
     },
     computed: {
-        filteredWorkers() {
-            const filteredWorkers = this.context.searchString === ""
-                ? this.context.workers
-                : this.context.workers.filter(wo => Object.values(wo).join("").indexOf(this.context.searchString) !== -1);
+        filteredItems() {
+            const filteredItems = this.context.searchString === ""
+                ? this.context.items
+                : this.context.items.filter(wo => Object.values(wo).join("").indexOf(this.context.searchString) !== -1);
 
             const column = this.sortColumn
             const order = this.order;
 
-            filteredWorkers.sort(function (a, b) {
+            filteredItems.sort(function (a, b) {
                 var nameA = a[column] + "".toUpperCase();
                 var nameB = b[column] + "".toUpperCase();
                 if (order === "DESC" && nameA > nameB) {
@@ -139,7 +161,8 @@ export default {
                 return 0;
             });
 
-            return filteredWorkers;
+            return filteredItems;
         },
     },
 }
+</script>
